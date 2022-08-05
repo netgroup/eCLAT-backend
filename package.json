@@ -1,0 +1,28 @@
+{
+  "name": "myproject",
+  "version": "1.0.0",
+  "description": "API for the eCLAT package manager website",
+  "main": "app.js",
+  "scripts": {
+    "start": "node ./bin/www",
+    "dev": "nodemon ./bin/www",
+    "test": "nyc _mocha --timeout 10000 --exit --report lcovonly -- -R spec"
+  },
+  "author": "Daniel Xhakalliu",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.0.1",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "debug": "^4.3.4",
+    "dotenv": "^16.0.1",
+    "express": "^4.18.1",
+    "express-jwt": "^7.7.5",
+    "express-validator": "^6.14.2",
+    "http": "^0.0.1-security",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^6.5.0",
+    "morgan": "^1.10.0",
+    "nodemailer": "^6.7.7"
+  }
+}
