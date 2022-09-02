@@ -2,7 +2,7 @@ const Package = require("../models/PackageModel");
 const { body, validationResult } = require("express-validator");
 const apiResponse = require("../helpers/apiResponse");
 const auth = require("../middlewares/jwt");
-const UserModel = require("../models/UserModel");
+const { compare } = require("compare-versions"); //Per controllare il numero di versione nuovo
 
 /**
  * Package List.
@@ -70,8 +70,6 @@ exports.packageDetail = [
  * Package Upload.
  *
  * @param {string}      name
- * @param {string}      url
- * @param {string}      version
  * @param {string}      author
  * @param {string}      description
  *
@@ -91,8 +89,6 @@ exports.packageStore = [
         }
       });
     }),
-  body("url", "Url must not be empty.").isLength({ min: 3 }).trim().escape(),
-  body("version", "Version must not be empty.").notEmpty().trim().escape(),
   body("description", "Description must not be empty.")
     .notEmpty()
     .trim()
@@ -102,14 +98,6 @@ exports.packageStore = [
     try {
       const errors = validationResult(req);
 
-      var package = new Package({
-        name: req.body.name,
-        url: req.body.url,
-        version: req.body.version,
-        author: req.auth,
-        description: req.body.description,
-      });
-
       if (!errors.isEmpty()) {
         return apiResponse.validationErrorWithData(
           res,
@@ -117,6 +105,12 @@ exports.packageStore = [
           errors.array()
         );
       } else {
+        var package = new Package({
+          name: req.body.name,
+          author: req.auth,
+          description: req.body.description,
+        });
+
         //Save package.
         package.save(function (err) {
           if (err) {
@@ -137,18 +131,96 @@ exports.packageStore = [
 ];
 
 /**
- * Package update.
+ * Add package version .
  *
  * @param {string}      url
  * @param {string}      version
+ * @param {string}      stato
+ * @param {string}      note
+ *
+ * @returns {Object}
+ */
+
+exports.packageVersionAdd = [
+  auth,
+  body("url", "Url must not be empty.").isLength({ min: 3 }).trim().escape(),
+  body("version", "Version number form is not valid")
+    .notEmpty()
+    .trim()
+    .escape()
+    .matches(/^\d+(?:\.\d+){2}$/),
+  body("note").trim().escape(),
+
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+
+      if (!errors.isEmpty()) {
+        return apiResponse.validationErrorWithData(
+          res,
+          "Validation Error.",
+          errors.array()
+        );
+      } else {
+        var release = {
+          url: req.body.url,
+          version: req.body.version,
+          stato: "not-verified",
+          note: req.body.description,
+        };
+
+        //Check if package name is correct
+        const package = await Package.findOne({ name: req.params.name });
+        if (!package) {
+          return apiResponse.ErrorResponse(res, "Package does not exist.");
+        }
+
+        //If there already exists one or more releases
+        if (package.releases.length > 0) {
+          var oldVersion = package.releases.pop().version;
+          //If the recent old version number is >= than the new one, error
+          if (compare(oldVersion, req.body.version, ">=")) {
+            return apiResponse.ErrorResponse(
+              res,
+              "Version number should be higher then older versions numbers."
+            );
+          }
+        }
+
+        //Add the new release.
+        Package.findOneAndUpdate(
+          { name: req.params.name },
+          { $addToSet: { releases: release } },
+          function (err) {
+            if (err) {
+              return apiResponse.ErrorResponse(res, err);
+            }
+            return apiResponse.successResponseWithData(
+              res,
+              "Package version added with success.",
+              release
+            );
+          }
+        );
+      }
+    } catch (err) {
+      //throw error in json response with status 500.
+      return apiResponse.ErrorResponse(res, err);
+    }
+  },
+];
+
+/**
+ * Package update.
+ *
+ * @param {string}      name
  * @param {string}      description
  *
  * @returns {Object}
  */
 exports.packageUpdate = [
   auth,
-  body("url", "Url must not be empty.").isLength({ min: 3 }).trim().escape(),
-  body("version", "Version must not be empty.").notEmpty().trim().escape(),
+  body("name", "Name must not be empty.").notEmpty().trim().escape(),
   body("description", "Description must not be empty.")
     .notEmpty()
     .trim()
@@ -159,9 +231,7 @@ exports.packageUpdate = [
       const errors = validationResult(req);
 
       var updatedPackage = {
-        //possiamo cambiare il nome del pacchetto?
-        url: req.body.url,
-        version: req.body.version,
+        name: req.body.name,
         description: req.body.description,
       };
 
@@ -194,6 +264,7 @@ exports.packageUpdate = [
                   updatedPackage,
                   function (err) {
                     if (err) {
+                      //for example if there already exists a package with the new name
                       return apiResponse.ErrorResponse(res, err);
                     } else {
                       return apiResponse.successResponseWithData(
