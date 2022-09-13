@@ -2,7 +2,7 @@ var mongoose = require("mongoose");
 
 const ReleaseSchema = new mongoose.Schema(
   {
-    url: { type: String, unique: true, required: true },
+    url: { type: String, required: true },
     version: { type: String, required: true },
     stato: {
       type: String,

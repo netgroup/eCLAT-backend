@@ -1,5 +1,6 @@
 const Package = require("../models/PackageModel");
 const { body, validationResult } = require("express-validator");
+var mongoose = require("mongoose");
 const apiResponse = require("../helpers/apiResponse");
 const auth = require("../middlewares/jwt");
 const { compare } = require("compare-versions"); //Per controllare il numero di versione nuovo
@@ -55,7 +56,7 @@ exports.packageDetail = [
           return apiResponse.successResponseWithData(
             res,
             "Operation success",
-            {}
+            null
           );
         }
       });
@@ -166,7 +167,7 @@ exports.packageVersionAdd = [
           url: req.body.url,
           version: req.body.version,
           stato: "not-verified",
-          note: req.body.description,
+          note: req.body.note,
         };
 
         //Check if package name is correct
@@ -323,6 +324,79 @@ exports.packageDelete = [
                 );
               }
             });
+          }
+        }
+      });
+    } catch (err) {
+      //throw error in json response with status 500.
+      return apiResponse.ErrorResponse(res, err);
+    }
+  },
+];
+
+/**
+ * Version delete.
+ *
+ * @param {string}      name
+ * @param {string}      version_id
+ *
+ * @returns {Object}
+ */
+exports.versionDelete = [
+  auth,
+  body("id")
+    .isLength({ min: 24, max: 24 })
+    .withMessage("Version ID should not be empty.")
+    .trim()
+    .escape(),
+  (req, res) => {
+    try {
+      console.log(req.body.id);
+      const errors = validationResult(req);
+
+      if (!errors.isEmpty()) {
+        return apiResponse.validationErrorWithData(
+          res,
+          "Validation Error.",
+          errors.array()
+        );
+      }
+      Package.findOne({ name: req.params.name }, function (err, foundPackage) {
+        if (foundPackage === null) {
+          return apiResponse.notFoundResponse(
+            res,
+            "Package with this name does not exist"
+          );
+        } else {
+          // Check authorized user
+          if (foundPackage.author !== req.auth._id) {
+            return apiResponse.unauthorizedResponse(
+              res,
+              "You are not authorized to do this operation."
+            );
+          } else {
+            foundPackage.releases = foundPackage.releases.filter((release) => {
+              if (!release._id.equals(req.body.id)) {
+                return release;
+              }
+            });
+
+            // Delete version.
+            Package.findOneAndUpdate(
+              { name: req.params.name },
+              foundPackage,
+              function (err) {
+                if (err) {
+                  //for example if there already exists a package with the new name
+                  return apiResponse.ErrorResponse(res, err);
+                } else {
+                  return apiResponse.successResponseWithData(
+                    res,
+                    "Version deleted with success."
+                  );
+                }
+              }
+            );
           }
         }
       });

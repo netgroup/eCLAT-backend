@@ -9,5 +9,6 @@ router.post("/", PackageController.packageStore);
 router.post("/:name/version", PackageController.packageVersionAdd);
 router.patch("/:name", PackageController.packageUpdate);
 router.delete("/:name", PackageController.packageDelete);
+router.put("/:name/delete-version", PackageController.versionDelete);
 
 module.exports = router;
