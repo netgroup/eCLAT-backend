@@ -4,7 +4,6 @@ var logger = require("morgan");
 var cors = require("cors");
 require("dotenv").config();
 
-var indexRouter = require("./routes/index");
 var apiRouter = require("./routes/api");
 var apiResponse = require("./helpers/apiResponse");
 
@@ -41,8 +40,7 @@ app.use(cookieParser());
 app.use(cors());
 
 //Route Prefixes
-app.use("/", indexRouter);
-app.use("/api/", apiRouter);
+app.use("/api/v1/", apiRouter);
 
 // throw 404 if URL not found
 app.all("*", function (req, res) {

@@ -2,14 +2,14 @@ var mongoose = require("mongoose");
 
 const ReleaseSchema = new mongoose.Schema(
   {
-    url: { type: String, required: true },
+    commit: { type: String, required: true },
     version: { type: String, required: true },
-    stato: {
+    status: {
       type: String,
-      enum: ["not-verified", "verified", "suspended"],
+      enum: ["queue", "verified", "error"],
       default: "non-verificato",
     },
-    note: { type: String, required: true }, //es: correzione bug
+    note: { type: String }, //es: correzione bug
   },
   {
     timestamps: {
@@ -18,4 +18,6 @@ const ReleaseSchema = new mongoose.Schema(
   }
 );
 
-module.exports = ReleaseSchema;
+const Release = mongoose.model("Release", ReleaseSchema);
+
+module.exports = Release;

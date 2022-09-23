@@ -11,8 +11,7 @@ const { constants } = require("../helpers/constants");
 /**
  * User registration.
  *
- * @param {string}      firstName
- * @param {string}      lastName
+ * @param {string}      username
  * @param {string}      email
  * @param {string}      password
  *
@@ -20,19 +19,12 @@ const { constants } = require("../helpers/constants");
  */
 exports.register = [
   // Validate fields.
-  body("firstName")
+  body("username")
     .notEmpty()
     .trim()
-    .withMessage("First name must be specified.")
+    .withMessage("Username must be specified.")
     .isAlphanumeric()
-    .withMessage("First name has non-alphanumeric characters.")
-    .escape(),
-  body("lastName")
-    .notEmpty()
-    .trim()
-    .withMessage("Last name must be specified.")
-    .isAlphanumeric()
-    .withMessage("Last name has non-alphanumeric characters.")
+    .withMessage("Username has non-alphanumeric characters.")
     .escape(),
   body("email")
     .notEmpty()
@@ -72,8 +64,7 @@ exports.register = [
           let otp = utility.randomNumber(4);
           // Create User object with escaped and trimmed data
           var user = new UserModel({
-            firstName: req.body.firstName,
-            lastName: req.body.lastName,
+            username: req.body.username,
             email: req.body.email,
             password: hash,
             confirmOTP: otp,
@@ -97,8 +88,7 @@ exports.register = [
                 }
                 let userData = {
                   _id: user._id,
-                  firstName: user.firstName,
-                  lastName: user.lastName,
+                  username: user.username,
                   email: user.email,
                 };
                 return apiResponse.successResponseWithData(
@@ -164,32 +154,25 @@ exports.login = [
                   //Check account confirmation.
                   if (user.isConfirmed) {
                     // Check User's account active or not.
-                    if (user.status) {
-                      let userData = {
-                        _id: user._id,
-                        firstName: user.firstName,
-                        lastName: user.lastName,
-                        email: user.email,
-                      };
-                      //Prepare JWT token for authentication
-                      const jwtPayload = userData;
-                      const jwtData = {
-                        expiresIn: process.env.JWT_TIMEOUT_DURATION,
-                      };
-                      const secret = process.env.JWT_SECRET;
-                      //Generated JWT token with Payload and secret.
-                      userData.token = jwt.sign(jwtPayload, secret, jwtData);
-                      return apiResponse.successResponseWithData(
-                        res,
-                        "Login Success.",
-                        userData
-                      );
-                    } else {
-                      return apiResponse.unauthorizedResponse(
-                        res,
-                        "Account is not active. Please contact admin."
-                      );
-                    }
+
+                    let userData = {
+                      _id: user._id,
+                      username: user.username,
+                      email: user.email,
+                    };
+                    //Prepare JWT token for authentication
+                    const jwtPayload = userData;
+                    const jwtData = {
+                      expiresIn: process.env.JWT_TIMEOUT_DURATION,
+                    };
+                    const secret = process.env.JWT_SECRET;
+                    //Generated JWT token with Payload and secret.
+                    userData.token = jwt.sign(jwtPayload, secret, jwtData);
+                    return apiResponse.successResponseWithData(
+                      res,
+                      "Login Success.",
+                      userData
+                    );
                   } else {
                     return apiResponse.unauthorizedResponse(
                       res,

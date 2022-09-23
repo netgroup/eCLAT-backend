@@ -4,6 +4,16 @@ var mongoose = require("mongoose");
 const apiResponse = require("../helpers/apiResponse");
 const auth = require("../middlewares/jwt");
 const { compare } = require("compare-versions"); //Per controllare il numero di versione nuovo
+require("dotenv").config();
+
+const Agenda = require("agenda");
+var MONGODB_URL = process.env.MONGODB_URL;
+const agenda = new Agenda({
+  db: {
+    address: MONGODB_URL,
+    collection: "agendaJobs",
+  },
+});
 
 /**
  * Package List.
@@ -72,6 +82,7 @@ exports.packageDetail = [
  *
  * @param {string}      name
  * @param {string}      author
+ * @param {string}      git_url
  * @param {string}      description
  *
  *
@@ -90,12 +101,14 @@ exports.packageStore = [
         }
       });
     }),
+  body("git_url", "Url must not be empty.").isLength({ min: 19 }).trim(),
+  body("tag", "Tag must not be empty.").notEmpty().trim(),
   body("description", "Description must not be empty.")
     .notEmpty()
     .trim()
     .escape(),
 
-  (req, res) => {
+  async (req, res) => {
     try {
       const errors = validationResult(req);
 
@@ -107,12 +120,14 @@ exports.packageStore = [
         );
       } else {
         var package = new Package({
-          name: req.body.name,
+          name: req.body.name.toLowerCase(),
           author: req.auth,
+          git_url: req.body.git_url,
+          tag: req.body.tag,
           description: req.body.description,
         });
 
-        //Save package.
+        // //Save package.
         package.save(function (err) {
           if (err) {
             return apiResponse.ErrorResponse(res, err);
@@ -134,9 +149,9 @@ exports.packageStore = [
 /**
  * Add package version .
  *
- * @param {string}      url
+ * @param {string}      commit
  * @param {string}      version
- * @param {string}      stato
+ * @param {string}      status
  * @param {string}      note
  *
  * @returns {Object}
@@ -144,7 +159,9 @@ exports.packageStore = [
 
 exports.packageVersionAdd = [
   auth,
-  body("url", "Url must not be empty.").isLength({ min: 3 }).trim().escape(),
+  body("commit", "Commit must be 40 characters long.")
+    .isLength({ min: 40, max: 40 })
+    .trim(),
   body("version", "Version number form is not valid")
     .notEmpty()
     .trim()
@@ -164,9 +181,9 @@ exports.packageVersionAdd = [
         );
       } else {
         var release = {
-          url: req.body.url,
+          commit: req.body.commit,
           version: req.body.version,
-          stato: "not-verified",
+          status: "queue",
           note: req.body.note,
         };
 
@@ -192,10 +209,18 @@ exports.packageVersionAdd = [
         Package.findOneAndUpdate(
           { name: req.params.name },
           { $addToSet: { releases: release } },
-          function (err) {
+          { new: true },
+          async function (err, doc) {
             if (err) {
               return apiResponse.ErrorResponse(res, err);
             }
+
+            release.packageId = doc._id;
+            release.packageUrl = doc.git_url;
+
+            const job = agenda.create("verify package", release);
+            await job.save();
+
             return apiResponse.successResponseWithData(
               res,
               "Package version added with success.",
@@ -222,6 +247,8 @@ exports.packageVersionAdd = [
 exports.packageUpdate = [
   auth,
   body("name", "Name must not be empty.").notEmpty().trim().escape(),
+  body("git_url", "Url must not be empty.").isLength({ min: 19 }).trim(),
+  body("tag", "Tag must not be empty.").notEmpty().trim(),
   body("description", "Description must not be empty.")
     .notEmpty()
     .trim()
@@ -232,7 +259,9 @@ exports.packageUpdate = [
       const errors = validationResult(req);
 
       var updatedPackage = {
-        name: req.body.name,
+        name: req.body.name.toLowerCase(),
+        git_url: req.body.git_url,
+        tag: req.body.tag,
         description: req.body.description,
       };
 

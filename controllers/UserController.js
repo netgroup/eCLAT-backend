@@ -1,6 +1,6 @@
 const User = require("../models/UserModel");
+const Package = require("../models/PackageModel");
 var mongoose = require("mongoose");
-const { body, validationResult } = require("express-validator");
 const apiResponse = require("../helpers/apiResponse");
 const auth = require("../middlewares/jwt");
 
@@ -40,7 +40,6 @@ exports.userList = [
  * User Detail.
  *
  * @param {string}      _id
- *
  * @returns {Object}
  */
 exports.userDetail = [
@@ -63,6 +62,37 @@ exports.userDetail = [
             );
           }
         });
+    } catch (err) {
+      //throw error in json response with status 500.
+      return apiResponse.ErrorResponse(res, err);
+    }
+  },
+];
+
+/**
+ * User Packages.
+ *
+ * @param {string}      _id
+ * @returns {Object}
+ */
+exports.userPackages = [
+  function (req, res) {
+    try {
+      Package.find({ author: req.params.id }).then((packages) => {
+        if (packages.length > 0) {
+          return apiResponse.successResponseWithData(
+            res,
+            "Operation success",
+            packages
+          );
+        } else {
+          return apiResponse.successResponseWithData(
+            res,
+            "Operation success",
+            []
+          );
+        }
+      });
     } catch (err) {
       //throw error in json response with status 500.
       return apiResponse.ErrorResponse(res, err);

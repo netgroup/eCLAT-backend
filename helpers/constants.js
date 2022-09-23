@@ -4,6 +4,6 @@ exports.constants = {
     email: "admin",
   },
   confirmEmails: {
-    from: "nodeprogrammer1234@outlook.it",
+    from: "nodeprogrammer123@outlook.it",
   },
 };
