@@ -153,8 +153,6 @@ exports.login = [
                 if (same) {
                   //Check account confirmation.
                   if (user.isConfirmed) {
-                    // Check User's account active or not.
-
                     let userData = {
                       _id: user._id,
                       username: user.username,

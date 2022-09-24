@@ -39,13 +39,13 @@ exports.userList = [
 /**
  * User Detail.
  *
- * @param {string}      _id
+ * @param {string}      username
  * @returns {Object}
  */
 exports.userDetail = [
   function (req, res) {
     try {
-      User.findOne({ _id: mongoose.Types.ObjectId(req.params.id) })
+      User.findOne({ username: req.params.username })
         .select("-password")
         .then((user) => {
           if (user !== null) {
@@ -72,13 +72,13 @@ exports.userDetail = [
 /**
  * User Packages.
  *
- * @param {string}      _id
+ * @param {string}      username
  * @returns {Object}
  */
 exports.userPackages = [
   function (req, res) {
     try {
-      Package.find({ author: req.params.id }).then((packages) => {
+      Package.find({ author: req.params.username }).then((packages) => {
         if (packages.length > 0) {
           return apiResponse.successResponseWithData(
             res,

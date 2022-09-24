@@ -121,13 +121,13 @@ exports.packageStore = [
       } else {
         var package = new Package({
           name: req.body.name.toLowerCase(),
-          author: req.auth,
+          author: req.auth.username,
           git_url: req.body.git_url,
           tag: req.body.tag,
           description: req.body.description,
         });
 
-        // //Save package.
+        //Save package.
         package.save(function (err) {
           if (err) {
             return apiResponse.ErrorResponse(res, err);
@@ -247,10 +247,15 @@ exports.packageVersionAdd = [
 exports.packageUpdate = [
   auth,
   body("name", "Name must not be empty.").notEmpty().trim().escape(),
-  body("git_url", "Url must not be empty.").isLength({ min: 19 }).trim(),
-  body("tag", "Tag must not be empty.").notEmpty().trim(),
-  body("description", "Description must not be empty.")
+  body("git_url")
     .notEmpty()
+    .withMessage("Url must not be empty.")
+    .isLength({ min: 19 })
+    .trim(),
+  body("tag").notEmpty().withMessage("Tag must not be empty.").trim(),
+  body("description")
+    .notEmpty()
+    .withMessage("Description must not be empty.")
     .trim()
     .escape(),
 
@@ -282,7 +287,7 @@ exports.packageUpdate = [
               );
             } else {
               // Check authorized user
-              if (foundPackage.author !== req.auth._id) {
+              if (foundPackage.author !== req.auth.username) {
                 return apiResponse.unauthorizedResponse(
                   res,
                   "You are not authorized to do this operation."
@@ -336,7 +341,7 @@ exports.packageDelete = [
           );
         } else {
           //Check authorized user
-          if (foundPackage.author !== req.auth._id) {
+          if (foundPackage.author !== req.auth.username) {
             return apiResponse.unauthorizedResponse(
               res,
               "You are not authorized to do this operation."
@@ -398,7 +403,7 @@ exports.versionDelete = [
           );
         } else {
           // Check authorized user
-          if (foundPackage.author !== req.auth._id) {
+          if (foundPackage.author !== req.auth.username) {
             return apiResponse.unauthorizedResponse(
               res,
               "You are not authorized to do this operation."
