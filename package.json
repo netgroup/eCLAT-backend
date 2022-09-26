@@ -12,7 +12,6 @@
   "license": "ISC",
   "dependencies": {
     "agenda": "^4.3.0",
-    "bcrypt": "^5.0.1",
     "compare-versions": "^5.0.1",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
@@ -25,6 +24,6 @@
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^6.5.0",
     "morgan": "^1.10.0",
-    "nodemailer": "^6.7.7"
+    "node-fetch": "^3.2.10"
   }
 }
