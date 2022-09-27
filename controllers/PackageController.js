@@ -121,7 +121,7 @@ exports.packageStore = [
       } else {
         var package = new Package({
           name: req.body.name.toLowerCase(),
-          author: req.auth.login,
+          author: req.user.login,
           git_url: req.body.git_url,
           tag: req.body.tag,
           description: req.body.description,
@@ -287,7 +287,7 @@ exports.packageUpdate = [
               );
             } else {
               // Check authorized user
-              if (foundPackage.author !== req.auth.login) {
+              if (foundPackage.author !== req.user.login) {
                 return apiResponse.unauthorizedResponse(
                   res,
                   "You are not authorized to do this operation."
@@ -341,7 +341,7 @@ exports.packageDelete = [
           );
         } else {
           //Check authorized user
-          if (foundPackage.author !== req.auth.login) {
+          if (foundPackage.author !== req.user.login) {
             return apiResponse.unauthorizedResponse(
               res,
               "You are not authorized to do this operation."
@@ -403,7 +403,7 @@ exports.versionDelete = [
           );
         } else {
           // Check authorized user
-          if (foundPackage.author !== req.auth.login) {
+          if (foundPackage.author !== req.user.login) {
             return apiResponse.unauthorizedResponse(
               res,
               "You are not authorized to do this operation."

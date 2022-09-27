@@ -54,7 +54,6 @@ exports.loginCallback = [
 
       //If user is not registered, save his username and email.
       if (!user) {
-        console.log("INSIDE HERE");
         var newUser = new UserModel({
           username: githubData.login,
           email: githubData.email,
