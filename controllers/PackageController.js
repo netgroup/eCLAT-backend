@@ -102,7 +102,7 @@ exports.packageStore = [
       });
     }),
   body("git_url", "Url must not be empty.").isLength({ min: 19 }).trim(),
-  body("tag", "Tag must not be empty.").notEmpty().trim(),
+  body("dev_branch", "Dev branch must not be empty.").notEmpty().trim(),
   body("description", "Description must not be empty.")
     .notEmpty()
     .trim()
@@ -123,7 +123,7 @@ exports.packageStore = [
           name: req.body.name.toLowerCase(),
           author: req.user.login,
           git_url: req.body.git_url,
-          tag: req.body.tag,
+          dev_branch: req.body.dev_branch,
           description: req.body.description,
         });
 
@@ -149,8 +149,7 @@ exports.packageStore = [
 /**
  * Add package version .
  *
- * @param {string}      commit
- * @param {string}      version
+ * @param {string}      version/tag
  * @param {string}      status
  * @param {string}      note
  *
@@ -159,9 +158,7 @@ exports.packageStore = [
 
 exports.packageVersionAdd = [
   auth,
-  body("commit", "Commit must be 40 characters long.")
-    .isLength({ min: 40, max: 40 })
-    .trim(),
+
   body("version", "Version number form is not valid")
     .notEmpty()
     .trim()
@@ -181,7 +178,6 @@ exports.packageVersionAdd = [
         );
       } else {
         var release = {
-          commit: req.body.commit,
           version: req.body.version,
           status: "queue",
           note: req.body.note,
@@ -252,7 +248,10 @@ exports.packageUpdate = [
     .withMessage("Url must not be empty.")
     .isLength({ min: 19 })
     .trim(),
-  body("tag").notEmpty().withMessage("Tag must not be empty.").trim(),
+  body("dev_branch")
+    .notEmpty()
+    .withMessage("Developer branch must not be empty.")
+    .trim(),
   body("description")
     .notEmpty()
     .withMessage("Description must not be empty.")
@@ -266,7 +265,7 @@ exports.packageUpdate = [
       var updatedPackage = {
         name: req.body.name.toLowerCase(),
         git_url: req.body.git_url,
-        tag: req.body.tag,
+        dev_branch: req.body.dev_branch,
         description: req.body.description,
       };
 

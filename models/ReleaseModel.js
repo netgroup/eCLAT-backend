@@ -2,7 +2,6 @@ var mongoose = require("mongoose");
 
 const ReleaseSchema = new mongoose.Schema(
   {
-    commit: { type: String, required: true },
     version: { type: String, required: true },
     status: {
       type: String,
